@@ -63,7 +63,7 @@
             font-size: 2rem;
             line-height: 1.15;
             color: rgb(25, 25, 25);
-            margin: 0 0 0.8em 0;
+            margin: 0 0 1.1em 0;
         }
 
         .title-block .byline {
@@ -142,20 +142,37 @@
         .audio-player .progress-wrap { flex: 1; display: flex; align-items: center; gap: 0.6em; }
 
         .audio-player .progress-bar {
-            flex: 1; height: 3px;
-            background: rgb(180, 180, 180);
-            border-radius: 2px;
+            flex: 1;
+            height: 24px;
+            background: transparent;
             cursor: pointer;
             position: relative;
-            overflow: hidden;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .audio-player .progress-bar::before {
+            content: '';
+            position: absolute;
+            left: 0; right: 0; top: 50%;
+            transform: translateY(-50%);
+            height: 3px;
+            background: rgb(180, 180, 180);
+            border-radius: 2px;
+            pointer-events: none;
         }
 
         .audio-player .progress-fill {
-            height: 100%;
+            position: absolute;
+            left: 0; top: 50%;
+            transform: translateY(-50%);
+            height: 3px;
             background: rgb(25, 25, 25);
             border-radius: 2px;
             width: 0%;
             transition: width 0.1s linear;
+            pointer-events: none;
         }
 
         .audio-player .time {
@@ -188,7 +205,8 @@
             .playlist-track .track-dur { color: rgb(120, 120, 120); }
             .audio-player .play-btn { border-color: rgb(100, 100, 100); color: rgb(204, 204, 204); background: transparent; }
             .audio-player .play-btn:hover { border-color: rgb(26, 195, 255); color: rgb(26, 195, 255); }
-            .audio-player .progress-bar { background: rgb(68, 68, 68); }
+            .audio-player .progress-bar { background: transparent; }
+            .audio-player .progress-bar::before { background: rgb(68, 68, 68); }
             .audio-player .progress-fill { background: rgb(204, 204, 204); }
             .audio-player .time { color: rgb(120, 120, 120); }
         }
@@ -373,11 +391,28 @@ function pauseAll(except) {
         }
     });
 
-    progressBar.addEventListener('click', (e) => {
-        const rect = progressBar.getBoundingClientRect();
-        const pct = (e.clientX - rect.left) / rect.width;
-        audio.currentTime = pct * audio.duration;
-    });
+    (function attachScrub(){
+        let scrubbing = false;
+        const seek = (clientX) => {
+            const rect = progressBar.getBoundingClientRect();
+            let pct = (clientX - rect.left) / rect.width;
+            pct = Math.max(0, Math.min(1, pct));
+            if (isFinite(audio.duration)) {
+                audio.currentTime = pct * audio.duration;
+                fill.style.width = (pct * 100) + '%';
+                timeDisplay.textContent = fmt(pct * audio.duration);
+            }
+        };
+        progressBar.addEventListener('pointerdown', (e) => {
+            scrubbing = true;
+            progressBar.setPointerCapture(e.pointerId);
+            seek(e.clientX);
+        });
+        progressBar.addEventListener('pointermove', (e) => { if (scrubbing) seek(e.clientX); });
+        const end = () => { scrubbing = false; };
+        progressBar.addEventListener('pointerup', end);
+        progressBar.addEventListener('pointercancel', end);
+    })();
 })();
 
 (function() {
@@ -416,11 +451,28 @@ function pauseAll(except) {
         timeDisplay.textContent = fmt(audio.duration);
     });
 
-    progressBar.addEventListener('click', (e) => {
-        const rect = progressBar.getBoundingClientRect();
-        const pct = (e.clientX - rect.left) / rect.width;
-        audio.currentTime = pct * audio.duration;
-    });
+    (function attachScrub(){
+        let scrubbing = false;
+        const seek = (clientX) => {
+            const rect = progressBar.getBoundingClientRect();
+            let pct = (clientX - rect.left) / rect.width;
+            pct = Math.max(0, Math.min(1, pct));
+            if (isFinite(audio.duration)) {
+                audio.currentTime = pct * audio.duration;
+                fill.style.width = (pct * 100) + '%';
+                timeDisplay.textContent = fmt(pct * audio.duration);
+            }
+        };
+        progressBar.addEventListener('pointerdown', (e) => {
+            scrubbing = true;
+            progressBar.setPointerCapture(e.pointerId);
+            seek(e.clientX);
+        });
+        progressBar.addEventListener('pointermove', (e) => { if (scrubbing) seek(e.clientX); });
+        const end = () => { scrubbing = false; };
+        progressBar.addEventListener('pointerup', end);
+        progressBar.addEventListener('pointercancel', end);
+    })();
 })();
 </script>
 
