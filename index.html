@@ -4,7 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>New Adventures in Hi-Fi</title>
-    <!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "0c699244b5f348fa83a49ec3baf35099"}'></script><!-- End Cloudflare Web Analytics -->
+    <!-- Plausible Analytics -->
+    <script async src="https://plausible.io/js/pa-l22G6JEP7wvc_HwvZWRQ-.js"></script>
+    <script>
+      window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+      plausible.init()
+    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cormorant+Garamond:wght@400;500;600&display=swap');
 
@@ -301,6 +306,10 @@ function fmt(s) {
     return m + ':' + (sec < 10 ? '0' : '') + sec;
 }
 
+function track(event, props) {
+    if (window.plausible) window.plausible(event, { props: props });
+}
+
 function pauseAll(except) {
     document.querySelectorAll('.audio-player [data-audio]').forEach(a => {
         if (a !== except && !a.paused) {
@@ -323,6 +332,15 @@ function pauseAll(except) {
     const timeDisplay = player.querySelector('[data-time]');
     const tracks = player.querySelectorAll('.playlist-track');
     let currentIndex = 0;
+    let played = false;
+
+    audio.addEventListener('play', () => {
+        if (!played) {
+            const name = tracks[currentIndex].querySelector('.track-name').textContent;
+            track('Audio Play', { player: 'VO Reel', track: name });
+            played = true;
+        }
+    });
 
     reelTracks.forEach((url, i) => {
         const tmp = new Audio();
@@ -342,6 +360,7 @@ function pauseAll(except) {
         currentIndex = i;
         audio.src = reelTracks[i];
         audio.load();
+        played = false;
         setActive(i);
         fill.style.width = '0%';
         timeDisplay.textContent = '0:00';
@@ -425,6 +444,14 @@ function pauseAll(except) {
     const progressBar = player.querySelector('[data-progress]');
     const fill = player.querySelector('[data-fill]');
     const timeDisplay = player.querySelector('[data-time]');
+    let played = false;
+
+    audio.addEventListener('play', () => {
+        if (!played) {
+            track('Audio Play', { player: 'Chapter', track: 'Underworld E01' });
+            played = true;
+        }
+    });
 
     playBtn.addEventListener('click', () => {
         pauseAll(audio);
